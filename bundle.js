@@ -87,6 +87,11 @@
 	  animate();
 	});
 
+	var camera = undefined,
+	    scene = undefined,
+	    renderer = undefined,
+	    controls = undefined;
+
 	function init(layerNodes, width, height) {
 	  console.log(width, height);
 	  scene = new THREE.Scene();

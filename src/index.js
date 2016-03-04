@@ -64,6 +64,8 @@ document.addEventListener("DOMContentLoaded", function(){
   animate();
 });
 
+let camera, scene, renderer, controls;
+
 function init(layerNodes, width, height){
   console.log(width, height);
   scene = new THREE.Scene();
