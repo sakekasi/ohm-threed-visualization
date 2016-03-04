@@ -115,7 +115,7 @@
 	  scene = new THREE.Scene();
 
 	  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500 );
-	  camera.position.z = 1000;
+	  camera.position.z = 500;
 
 	  // let light = new THREE.AmbientLight( 0x404040 ); // soft white light
 	  // scene.add( light );
@@ -129,7 +129,7 @@
 
 	  layerNodes.forEach((layer, i)=>{
 	    let object3d = new THREE.CSS3DObject(layer);
-	    object3d.position.set(-width/2, height/2, i*15);
+	    object3d.position.set(-width/2, height/2, i*3);
 	    scene.add(object3d);
 	  })
 	  // scene.add( new CodeExample(example, -50, -50, 0) );
