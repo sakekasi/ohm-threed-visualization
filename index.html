@@ -1,17 +1,149 @@
 <html>
 <head>
   <style>
-  div.codeExample > pre {
+  pre{
     font-family: "input serif compressed", monospace;
     -moz-user-select: none;
     -webkit-user-select: none;
+    color: hsl(0, 0%; 40%);
+  }
+
+  pre * {
+    background-color: hsla(0, 0%, 70%, 0.05);
   }
   </style>
+  <script type="text/ohm-js">
+
+  O {
+
+    Program
+      = Stmts
+
+    Stmts
+      = Stmt* Exp?
+
+    Stmt
+      = class ident (extends ident)? (with NonemptyListOf<ident, ",">)? ";"  -- classDecl
+      | def ident "." ident "(" ListOf<ident, ","> ")" MethodBody            -- methodDeclJava
+      | def ident (ident ":" ident)+ MethodBody                              -- methodDeclKeyword
+      | def ident binSelector ident MethodBody                               -- methodDeclBinary
+      | def ident "(" ListOf<ident, ","> ")" MethodBody                      -- methodDeclCall
+      | var ident "=" Exp ";"                                                -- varDecl
+      | ident "=" Exp ";"                                                    -- varAssign
+      | this "." ident "=" Exp ";"                                           -- instVarAssign
+      | return Exp ";"                                                       -- return
+      | Exp ";"                                                              -- exp
+
+    MethodBody
+      = "=" Exp ";"    -- exp
+      | "{" Stmts "}"  -- stmt
+
+    Exp
+      = KWSendExp
+
+    KWSendExp
+      = EqExp (ident ":" EqExp)+  -- send
+      | super (ident ":" EqExp)+  -- super
+      | EqExp
+
+    EqExp
+      = RelExp ("==" | "!=") RelExp  -- eq
+      | RelExp
+
+    RelExp
+      = AddExp ("<=" | "<" | ">=" | ">") AddExp  -- rel
+      | AddExp
+
+    AddExp
+      = AddExp ("+" | "-") MulExp  -- add
+      | MulExp
+
+    MulExp
+      = MulExp ("*" | "/" | "%") DotExp  -- mul
+      | DotExp
+
+    DotExp
+      = DotExp "." ident "(" Actuals ")"  -- send
+      | super "." ident "(" Actuals ")"   -- super
+      | this "." ident  ~"("              -- instVarAccess
+      | UnExp
+
+    UnExp
+      = "-" CallExp  -- neg
+      | CallExp
+
+    CallExp
+      = CallExp "(" Actuals ")"  -- call
+      | PriExp
+
+    PriExp
+      = "(" Exp ")"                  -- paren
+      | "{" BlockArgNames Stmts "}"  -- block
+      | new ident "(" Actuals ")"    -- new
+      | string                       -- str
+      | ident                        -- ident
+      | number                       -- number
+      | this                         -- this
+      | trueK                        -- true
+      | falseK                       -- false
+      | nullK                        -- null
+
+    Actuals
+      = ListOf<Exp, ",">
+
+    BlockArgNames
+      = ListOf<ident, ","> "|"  -- some
+      |                         -- none
+
+    // Lexical rules
+
+    ident  (an identifier)
+      = ~keyword letter alnum*
+
+    string  (a string literal)
+      = "\"" (~"\"" ~"\n" any)* "\""
+
+    number  (a number literal)
+      = digit* "." digit+  -- fract
+      | digit+             -- whole
+
+    binSelector  (a binary selector)
+      = "==" | "!=" | "<=" | "<" | ">=" | ">" | "+"  | "-"  | "*"  | "/" | "%" | "@"
+
+    class = "class" ~alnum
+    def = "def" ~alnum
+    extends = "extends" ~alnum
+    falseK = "false" ~alnum
+    new = "new" ~alnum
+    nullK = "null" ~alnum
+    return = "return" ~alnum
+    super = "super" ~alnum
+    this = "this" ~alnum
+    trueK = "true" ~alnum
+    var = "var" ~alnum
+    with = "with" ~alnum
+
+    keyword
+      = class | def | extends | falseK | new | nullK | return | super | this | trueK | var | with
+
+    space
+     += comment
+
+    comment
+      = "/*" (~"*/" any)* "*/"  -- multiLine
+      | "//" (~"\n" any)*       -- singleLine
+
+    tokens
+      = (keyword | ident | number | comment | any)*
+
+  }
+
+  </script>
 </head>
 <body>
 <script src="three.js-master/build/three.min.js"></script>
 <script src="three.js-master/examples/js/controls/TrackballControls.js"></script>
 <script src="three.js-master/examples/js/renderers/CSS3DRenderer.js"></script>
-<script src="src/index.js"></script>
+<script src="bundle.js"></script>
 </body>
 </html>

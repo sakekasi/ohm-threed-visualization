@@ -1,53 +1,71 @@
-// var THREE = require("three"),
-// var THREE = require("three");
+var reify = require("./reify.js"),
+    language = require("./language.js"),
+    layers = require("./layers.js");
 
-let example = `class Point with x, y;
+let example = ["class Point with x, y;",
+"",
+'def Point.init(x, y) {',
+'  this.x = x;',
+'  this.y = y;',
+'}',
+'',
+'def Point.toString() {',
+'  return "Point(" + this.x + ", " + this.y + ")";',
+'}',
+'',
+'class ThreeDeePoint extends Point with z;',
+'',
+'def ThreeDeePoint.init(x, y, z) {',
+'  super.init(x, y);',
+'  this.z = z;',
+'}',
+'',
+'def ThreeDeePoint.toString() {',
+'  return "ThreeDeePoint(" +',
+'  this.x + ", " +',
+'  this.y + ", " +',
+'  this.z + ")";',
+'}',
+'',
+'new Point(1, 2);'].join("\n");
 
-def Point.init(x, y) {
-  this.x = x;
-  this.y = y;
-}
+document.addEventListener("DOMContentLoaded", function(){
+  let grammar = language.grammar,
+      semantics = language.semantics;
 
-def Point.toString() {
-  return "Point(" + this.x + ", " + this.y + ")";
-}
+  reify.registerReifyActions(semantics);
+  layers.registerLayersAction(semantics);
 
+  let match;
+  let semmatch;
+  try {
+    match = grammar.match(example);
+    semmatch = semantics(match);
+  } catch (e) {
+    console.error(match.message);
+  }
 
-class ThreeDeePoint extends Point with z;
-
-def ThreeDeePoint.init(x, y, z) {
-  super.init(x, y);
-  this.z = z;
-}
-
-def ThreeDeePoint.toString() {
-  return "ThreeDeePoint(" +
-  this.x + ", " +
-  this.y + ", " +
-  this.z + ")";
-}
-
-new Point(1, 2);`;
-
-
-init();
-animate();
-
-function CodeExample(code, x, y, z){
-  let div = document.createElement("div");
-  div.classList.add("codeExample");
+  let reified = reify.reify(semantics, match);
+  let DOM = reified[0],
+      domToOhm = reified[1],
+      ohmToDom = reified[2];
 
   let pre = document.createElement("pre");
-  pre.textContent = code;
-  div.appendChild(pre);
+  pre.appendChild(DOM);
+  document.body.appendChild(pre);
 
-  let object3d = new THREE.CSS3DObject( div );
-  object3d.position.set(x, y, z);
+  let boundingRect = DOM.getBoundingClientRect();
 
-  return object3d;
-}
+  let layerNodes = semmatch.layers(ohmToDom, null, null);
 
-function init(){
+  pre.style.display = "none";
+
+  init(layerNodes, boundingRect.width, boundingRect.height);
+  animate();
+});
+
+function init(layerNodes, width, height){
+  console.log(width, height);
   scene = new THREE.Scene();
 
   camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500 );
@@ -56,7 +74,6 @@ function init(){
   // let light = new THREE.AmbientLight( 0x404040 ); // soft white light
   // scene.add( light );
 
-
   renderer = new THREE.CSS3DRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
   renderer.domElement.style.position = 'absolute';
@@ -64,7 +81,12 @@ function init(){
 
   document.body.appendChild( renderer.domElement );
 
-  scene.add( new CodeExample(example, -50, -50, 0) );
+  layerNodes.forEach((layer, i)=>{
+    let object3d = new THREE.CSS3DObject(layer);
+    object3d.position.set(-width/2, height/2, i*15);
+    scene.add(object3d);
+  })
+  // scene.add( new CodeExample(example, -50, -50, 0) );
 
   controls = new THREE.TrackballControls(camera);
   controls.rotateSpeed = 4;
