@@ -50,7 +50,7 @@
 	    language = __webpack_require__(3),
 	    layers = __webpack_require__(5);
 
-	var example = ["class Point with x, y;", "", 'def Point.init(x, y) {', '  this.x = x;', '  this.y = y;', '}', '', 'def Point.toString() {', '  return "Point(" + this.x + ", " + this.y + ")";', '}', '', 'class ThreeDeePoint extends Point with z;', '', 'def ThreeDeePoint.init(x, y, z) {', '  super.init(x, y);', '  this.z = z;', '}', '', 'def ThreeDeePoint.toString() {', '  return "ThreeDeePoint(" +', '  this.x + ", " +', '  this.y + ", " +', '  this.z + ")";', '}', '', 'new Point(1, 2);'].join("\n");
+	var example = ["class Point with x, y;", "", 'def Point.init(x, y) {', '  this.x = x;', '  this.y = y;', '}', '', 'def Point.toString() {', '  return "Point(" + this.x + ", " + this.y + ")";', '}', '', 'class ThreeDeePoint extends Point with z;', '', 'def ThreeDeePoint.init(x, y, z) {', '  super.init(x, y);', '  this.z = z;', '}', '', 'def ThreeDeePoint.toString() {', '  return "ThreeDeePoint(" +', '    this.x + ", " +', '    this.y + ", " +', '    this.z + ")";', '}', '', 'new Point(1, 2);'].join("\n");
 
 	document.addEventListener("DOMContentLoaded", function () {
 	  var grammar = language.grammar,
@@ -109,12 +109,14 @@
 
 	  document.body.appendChild(renderer.domElement);
 
+	  var layerDiff = 2;
 	  layerNodes.forEach(function (layer, i) {
-	    var object3d = new THREE.CSS3DObject(layer);
-	    object3d.position.set(-width / 2, height / 2, i * 3);
-	    scene.add(object3d);
+	    for (var j = 0; j < layerDiff; j += 1) {
+	      var object3d = new THREE.CSS3DObject(layer.cloneNode(true));
+	      object3d.position.set(-width / 2, height / 2, i * layerDiff + j);
+	      scene.add(object3d);
+	    }
 	  });
-	  // scene.add( new CodeExample(example, -50, -50, 0) );
 
 	  controls = new THREE.TrackballControls(camera);
 	  controls.rotateSpeed = 4;

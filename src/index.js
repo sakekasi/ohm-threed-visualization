@@ -22,9 +22,9 @@ let example = ["class Point with x, y;",
 '',
 'def ThreeDeePoint.toString() {',
 '  return "ThreeDeePoint(" +',
-'  this.x + ", " +',
-'  this.y + ", " +',
-'  this.z + ")";',
+'    this.x + ", " +',
+'    this.y + ", " +',
+'    this.z + ")";',
 '}',
 '',
 'new Point(1, 2);'].join("\n");
@@ -83,10 +83,13 @@ function init(layerNodes, width, height){
 
   document.body.appendChild( renderer.domElement );
 
+  let layerDiff = 2;
   layerNodes.forEach((layer, i)=>{
-    let object3d = new THREE.CSS3DObject(layer);
-    object3d.position.set(-width/2, height/2, i*3);
-    scene.add(object3d);
+    for(let j=0; j < layerDiff; j+=1){
+      let object3d = new THREE.CSS3DObject(layer.cloneNode(true));
+      object3d.position.set(-width/2, height/2, i*layerDiff + j);
+      scene.add(object3d);
+    }
   })
 
   controls = new THREE.TrackballControls(camera);
