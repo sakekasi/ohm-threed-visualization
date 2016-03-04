@@ -6601,6 +6601,7 @@
 	      layerNode.style.position = "absolute";
 	      layerNode.style.top =  boundingRect.top - parentBoundingRect.top;
 	      layerNode.style.left = boundingRect.left - parentBoundingRect.left;
+	      layerNode.style.textIndent = domNode.offsetLeft - boundingRect.left;
 
 	      children.forEach((child)=>{
 	        child.layers(
