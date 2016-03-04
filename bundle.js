@@ -44,46 +44,23 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
+	"use strict";
+
 	var reify = __webpack_require__(1),
 	    language = __webpack_require__(3),
 	    layers = __webpack_require__(5);
 
-	let example = ["class Point with x, y;",
-	"",
-	'def Point.init(x, y) {',
-	'  this.x = x;',
-	'  this.y = y;',
-	'}',
-	'',
-	'def Point.toString() {',
-	'  return "Point(" + this.x + ", " + this.y + ")";',
-	'}',
-	'',
-	'class ThreeDeePoint extends Point with z;',
-	'',
-	'def ThreeDeePoint.init(x, y, z) {',
-	'  super.init(x, y);',
-	'  this.z = z;',
-	'}',
-	'',
-	'def ThreeDeePoint.toString() {',
-	'  return "ThreeDeePoint(" +',
-	'  this.x + ", " +',
-	'  this.y + ", " +',
-	'  this.z + ")";',
-	'}',
-	'',
-	'new Point(1, 2);'].join("\n");
+	var example = ["class Point with x, y;", "", 'def Point.init(x, y) {', '  this.x = x;', '  this.y = y;', '}', '', 'def Point.toString() {', '  return "Point(" + this.x + ", " + this.y + ")";', '}', '', 'class ThreeDeePoint extends Point with z;', '', 'def ThreeDeePoint.init(x, y, z) {', '  super.init(x, y);', '  this.z = z;', '}', '', 'def ThreeDeePoint.toString() {', '  return "ThreeDeePoint(" +', '  this.x + ", " +', '  this.y + ", " +', '  this.z + ")";', '}', '', 'new Point(1, 2);'].join("\n");
 
-	document.addEventListener("DOMContentLoaded", function(){
-	  let grammar = language.grammar,
+	document.addEventListener("DOMContentLoaded", function () {
+	  var grammar = language.grammar,
 	      semantics = language.semantics;
 
 	  reify.registerReifyActions(semantics);
 	  layers.registerLayersAction(semantics);
 
-	  let match;
-	  let semmatch;
+	  var match = undefined;
+	  var semmatch = undefined;
 	  try {
 	    match = grammar.match(example);
 	    semmatch = semantics(match);
@@ -91,18 +68,18 @@
 	    console.error(match.message);
 	  }
 
-	  let reified = reify.reify(semantics, match);
-	  let DOM = reified[0],
+	  var reified = reify.reify(semantics, match);
+	  var DOM = reified[0],
 	      domToOhm = reified[1],
 	      ohmToDom = reified[2];
 
-	  let pre = document.createElement("pre");
+	  var pre = document.createElement("pre");
 	  pre.appendChild(DOM);
 	  document.body.appendChild(pre);
 
-	  let boundingRect = DOM.getBoundingClientRect();
+	  var boundingRect = DOM.getBoundingClientRect();
 
-	  let layerNodes = semmatch.layers(ohmToDom, null, null);
+	  var layerNodes = semmatch.layers(ohmToDom, null, null);
 
 	  pre.style.display = "none";
 
@@ -110,28 +87,28 @@
 	  animate();
 	});
 
-	function init(layerNodes, width, height){
+	function init(layerNodes, width, height) {
 	  console.log(width, height);
 	  scene = new THREE.Scene();
 
-	  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500 );
+	  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 500);
 	  camera.position.z = 500;
 
 	  // let light = new THREE.AmbientLight( 0x404040 ); // soft white light
 	  // scene.add( light );
 
 	  renderer = new THREE.CSS3DRenderer();
-	  renderer.setSize( window.innerWidth, window.innerHeight );
+	  renderer.setSize(window.innerWidth, window.innerHeight);
 	  renderer.domElement.style.position = 'absolute';
 	  renderer.domElement.style.top = 0;
 
-	  document.body.appendChild( renderer.domElement );
+	  document.body.appendChild(renderer.domElement);
 
-	  layerNodes.forEach((layer, i)=>{
-	    let object3d = new THREE.CSS3DObject(layer);
-	    object3d.position.set(-width/2, height/2, i*3);
+	  layerNodes.forEach(function (layer, i) {
+	    var object3d = new THREE.CSS3DObject(layer);
+	    object3d.position.set(-width / 2, height / 2, i * 3);
 	    scene.add(object3d);
-	  })
+	  });
 	  // scene.add( new CodeExample(example, -50, -50, 0) );
 
 	  controls = new THREE.TrackballControls(camera);
@@ -146,12 +123,11 @@
 	  renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
-	function animate(){
+	function animate() {
 	  requestAnimationFrame(animate);
 	  controls.update();
 	  renderer.render(scene, camera);
 	}
-
 
 /***/ },
 /* 1 */
@@ -166,54 +142,62 @@
 	    mergeObjects = util.mergeObjects;
 
 	var toExport = {
-	  registerReifyActions,
-	  reify
+	  registerReifyActions: registerReifyActions,
+	  reify: reify
 	};
 
-	if(typeof module !== "undefined" && typeof module.exports !== "undefined"){
+	if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
 	  module.exports = toExport;
 	} else {
 	  Object.assign(window, toExport);
 	}
 
-	function closeTag(tagName){
-	  return `</${tagName}>`;
+	function closeTag(tagName) {
+	  return "</" + tagName + ">";
 	}
 
-	function openTag(tagName){
-	  return `<${tagName}>`;
+	function openTag(tagName) {
+	  return "<" + tagName + ">";
 	}
 
-	function registerReifyActions(semantics){
+	function registerReifyActions(semantics) {
 	  semantics.addOperation("reifyAST(tagPositions)", {
-	    _nonterminal(children){
-	      let start = this.interval.startIdx,
+	    _nonterminal: function _nonterminal(children) {
+	      var _this = this;
+
+	      var start = this.interval.startIdx,
 	          end = this.interval.endIdx;
-	      let tagName = this._node.ctorName;
+	      var tagName = this._node.ctorName;
 
 	      getWithInit(this.args.tagPositions, start, []).push(openTag(tagName));
 
-	      for(let i=0; i < children.length; i++){
-	        let child = children[i];
-	        if(child._node.ctorName === "_iter"){
-	          let iters = [child];
-	          while(children[i+1] && children[i+1]._node.ctorName === "_iter"){
-	            if(children[i+1].interval.contents === iters[0].interval.contents){
-	              iters.push(children[++i]);
-	            } else {
-	              break;
+	      for (var i = 0; i < children.length; i++) {
+	        var child = children[i];
+	        if (child._node.ctorName === "_iter") {
+	          (function () {
+	            var iters = [child];
+	            while (children[i + 1] && children[i + 1]._node.ctorName === "_iter") {
+	              if (children[i + 1].interval.contents === iters[0].interval.contents) {
+	                iters.push(children[++i]);
+	              } else {
+	                break;
+	              }
 	            }
-	          }
 
-	          let iterChildren = iters.map((iter)=>Array.prototype.slice.call(iter.children));
-	          let interleavedChildren = [];
-	          while(iterChildren[0].length > 0){
-	            iterChildren.forEach((iterC)=>{
-	              interleavedChildren.push(iterC.shift());
+	            var iterChildren = iters.map(function (iter) {
+	              return Array.prototype.slice.call(iter.children);
 	            });
-	          }
+	            var interleavedChildren = [];
+	            while (iterChildren[0].length > 0) {
+	              iterChildren.forEach(function (iterC) {
+	                interleavedChildren.push(iterC.shift());
+	              });
+	            }
 
-	          interleavedChildren.forEach(child=> child.reifyAST(this.args.tagPositions));
+	            interleavedChildren.forEach(function (child) {
+	              return child.reifyAST(_this.args.tagPositions);
+	            });
+	          })();
 	        } else {
 	          child.reifyAST(this.args.tagPositions);
 	        }
@@ -222,10 +206,10 @@
 	      // children.forEach(child=> child.reifyAST(this.args.tagPositions));
 	      getWithInit(this.args.tagPositions, end, []).push(closeTag(tagName));
 	    },
-	    _terminal(){
-	      let start = this.interval.startIdx,
+	    _terminal: function _terminal() {
+	      var start = this.interval.startIdx,
 	          end = this.interval.endIdx;
-	      let tagName = "terminal";
+	      var tagName = "terminal";
 
 	      getWithInit(this.args.tagPositions, start, []).push(openTag(tagName));
 	      getWithInit(this.args.tagPositions, end, []).push(closeTag(tagName));
@@ -233,99 +217,109 @@
 	  });
 
 	  semantics.addOperation("mapDOM(DOMNode, domToOhm, ohmToDom)", {
-	    _nonterminal(children){
+	    _nonterminal: function _nonterminal(children) {
+	      var _this2 = this;
+
 	      this.args.domToOhm.set(this.args.DOMNode, this._node);
 	      this.args.ohmToDom.set(this._node, this.args.DOMNode);
 
-	      let DOMChildren = Array.prototype.slice.apply(this.args.DOMNode.children);
-	      for(let i=0; i < children.length; i++){
-	        let child = children[i];
-	        if(child._node.ctorName === "_iter"){
-	          let iters = [child];
-	          while(children[i+1] && children[i+1]._node.ctorName === "_iter"){
-	            if(children[i+1].interval.contents === iters[0].interval.contents){
-	              iters.push(children[++i]);
-	            } else {
-	              break;
+	      var DOMChildren = Array.prototype.slice.apply(this.args.DOMNode.children);
+	      for (var i = 0; i < children.length; i++) {
+	        var child = children[i];
+	        if (child._node.ctorName === "_iter") {
+	          (function () {
+	            var iters = [child];
+	            while (children[i + 1] && children[i + 1]._node.ctorName === "_iter") {
+	              if (children[i + 1].interval.contents === iters[0].interval.contents) {
+	                iters.push(children[++i]);
+	              } else {
+	                break;
+	              }
 	            }
-	          }
 
-	          let numDOMChildrenCovered = iters.reduce((agg, b)=>agg + b.children.length, 0);
-	          let DOMChildrenCovered = DOMChildren.slice(0, numDOMChildrenCovered);
-	          DOMChildren = DOMChildren.slice(numDOMChildrenCovered);
+	            var numDOMChildrenCovered = iters.reduce(function (agg, b) {
+	              return agg + b.children.length;
+	            }, 0);
+	            var DOMChildrenCovered = DOMChildren.slice(0, numDOMChildrenCovered);
+	            DOMChildren = DOMChildren.slice(numDOMChildrenCovered);
 
-	          let iterDOMChildren = iters.map(()=>[]);
-	          DOMChildrenCovered.forEach((domChild, i)=>{
-	            iterDOMChildren[i % iterDOMChildren.length].push(domChild);
-	          });
+	            var iterDOMChildren = iters.map(function () {
+	              return [];
+	            });
+	            DOMChildrenCovered.forEach(function (domChild, i) {
+	              iterDOMChildren[i % iterDOMChildren.length].push(domChild);
+	            });
 
-	          iterDOMChildren.forEach((domChildren, i)=>{
-	            iters[i].mapDOM(domChildren, this.args.domToOhm, this.args.ohmToDom);
-	          });
+	            iterDOMChildren.forEach(function (domChildren, i) {
+	              iters[i].mapDOM(domChildren, _this2.args.domToOhm, _this2.args.ohmToDom);
+	            });
+	          })();
 	        } else {
 	          child.mapDOM(DOMChildren.shift(), this.args.domToOhm, this.args.ohmToDom);
 	        }
 	      }
 	    },
-	    _iter(children){
-	      let DOMNodes = this.args.DOMNode;
-	      if(children.length !== DOMNodes.length){
-	        throw new Error(`ERROR: iterator node got a different number of dom nodes(${DOMNodes.length}) than children(${children.length})`);
+	    _iter: function _iter(children) {
+	      var _this3 = this;
+
+	      var DOMNodes = this.args.DOMNode;
+	      if (children.length !== DOMNodes.length) {
+	        throw new Error("ERROR: iterator node got a different number of dom nodes(" + DOMNodes.length + ") than children(" + children.length + ")");
 	        return;
 	      }
 
-	      children.forEach((child, i)=> child.mapDOM(DOMNodes[i], this.args.domToOhm, this.args.ohmToDom));
+	      children.forEach(function (child, i) {
+	        return child.mapDOM(DOMNodes[i], _this3.args.domToOhm, _this3.args.ohmToDom);
+	      });
 	    },
-	    _terminal(){
+	    _terminal: function _terminal() {
 	      this.args.domToOhm.set(this.args.DOMNode, this._node);
 	      this.args.ohmToDom.set(this._node, this.args.DOMNode);
 	    }
 	  });
 	}
 
-	function reify(semantics, match){
-	  let tagPositions = {};
-	  let domToOhm = new Map(),
+	function reify(semantics, match) {
+	  var tagPositions = {};
+	  var domToOhm = new Map(),
 	      ohmToDom = new Map();
-	  let example = match._cst.interval.contents;
+	  var example = match._cst.interval.contents;
 
-	  let semmatch = semantics(match);
+	  var semmatch = semantics(match);
 
 	  semmatch.reifyAST(tagPositions);
 
-	  tagPositions = mapObject(tagPositions, function(tags){
+	  tagPositions = mapObject(tagPositions, function (tags) {
 	    return tags.join("");
 	  });
 
 	  var positionsToInsert = Object.keys(tagPositions);
-	  var stringsToInsert = Object.keys(tagPositions).map((key)=>tagPositions[key]);
+	  var stringsToInsert = Object.keys(tagPositions).map(function (key) {
+	    return tagPositions[key];
+	  });
 
 	  var start = 0,
 	      end;
 	  var splitExampleString = [];
-	  while(positionsToInsert.length > 0){
+	  while (positionsToInsert.length > 0) {
 	    end = positionsToInsert.shift();
-	    splitExampleString.push(
-	      example.substring(start, end)
-	    );
+	    splitExampleString.push(example.substring(start, end));
 
 	    start = end;
 	  }
-	  splitExampleString.push(
-	    example.substring(start)
-	  );
+	  splitExampleString.push(example.substring(start));
 
 	  var annotatedExamplePieces = [];
 	  annotatedExamplePieces.push(splitExampleString.shift());
-	  while(stringsToInsert.length > 0){
+	  while (stringsToInsert.length > 0) {
 	    annotatedExamplePieces.push(stringsToInsert.shift());
 	    annotatedExamplePieces.push(splitExampleString.shift());
 	  }
 	  annotatedExamplePieces.push(splitExampleString.shift());
 
-	  let annotatedExample = annotatedExamplePieces.join("");
-	  let parser = new DOMParser();
-	  let DOM = parser.parseFromString(annotatedExample, "text/html");
+	  var annotatedExample = annotatedExamplePieces.join("");
+	  var parser = new DOMParser();
+	  var DOM = parser.parseFromString(annotatedExample, "text/html");
 	  DOM = DOM.querySelector('body').children[0];
 
 	  semmatch.mapDOM(DOM, domToOhm, ohmToDom);
@@ -333,60 +327,61 @@
 	  return [DOM, domToOhm, ohmToDom];
 	}
 
-
 /***/ },
 /* 2 */
 /***/ function(module, exports) {
 
+	"use strict";
+
 	var toExport = {
-	  compare,
-	  getWithInit,
-	  mapObject,
-	  mergeObjects,
-	  isLexical
+	  compare: compare,
+	  getWithInit: getWithInit,
+	  mapObject: mapObject,
+	  mergeObjects: mergeObjects,
+	  isLexical: isLexical
 	};
 
-	if(typeof module !== "undefined" && typeof module.exports !== "undefined"){
+	if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
 	  module.exports = toExport;
 	} else {
 	  Object.assign(window, toExport);
 	}
 
-	function isLexical(name){
+	function isLexical(name) {
 	  return name[0].toLowerCase() === name[0];
 	}
 
-	function compare(a, b){
-	  if(a > b){
+	function compare(a, b) {
+	  if (a > b) {
 	    return 1;
-	  } else if(a < b){
+	  } else if (a < b) {
 	    return -1;
 	  } else {
 	    return 0;
 	  }
 	}
 
-	function getWithInit(object, key, defaultValue){
-	  if(!object.hasOwnProperty(key)){
+	function getWithInit(object, key, defaultValue) {
+	  if (!object.hasOwnProperty(key)) {
 	    object[key] = defaultValue;
 	  }
 
 	  return object[key];
 	}
 
-	function mapObject(object, fun){
+	function mapObject(object, fun) {
 	  var out = {};
-	  Object.keys(object).forEach(function(key){
+	  Object.keys(object).forEach(function (key) {
 	    out[key] = fun(object[key]);
 	  });
 
 	  return out;
 	}
 
-	function mergeObjects(a, b, fun){
+	function mergeObjects(a, b, fun) {
 	  var out = {};
-	  Object.keys(a).forEach(function(key){
-	    if(b.hasOwnProperty(key)){
+	  Object.keys(a).forEach(function (key) {
+	    if (b.hasOwnProperty(key)) {
 	      out[key] = fun(a[key], b[key]);
 	    } else {
 	      out[key] = a[key];
@@ -395,7 +390,6 @@
 
 	  return Object.assign({}, b, out); //if conflict between b and out, prefer out.
 	}
-
 
 /***/ },
 /* 3 */
@@ -406,11 +400,11 @@
 	var ohm = __webpack_require__(4);
 
 	var toExport = {
-	  grammar,
-	  semantics
+	  grammar: grammar,
+	  semantics: semantics
 	};
 
-	if(typeof module !== "undefined" && typeof module.exports !== "undefined"){
+	if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
 	  module.exports = toExport;
 	} else {
 	  Object.assign(window, toExport);
@@ -419,13 +413,12 @@
 	var grammar = null,
 	    semantics = null;
 
-	document.addEventListener("DOMContentLoaded", function(){
-	  let script = document.querySelector('script[type="text/ohm-js"]');
+	document.addEventListener("DOMContentLoaded", function () {
+	  var script = document.querySelector('script[type="text/ohm-js"]');
 
 	  toExport.grammar = ohm.grammarFromScriptElement(script);
 	  toExport.semantics = toExport.grammar.semantics();
 	});
-
 
 /***/ },
 /* 4 */
@@ -6572,70 +6565,67 @@
 	'use strict';
 
 	var toExport = {
-	  registerLayersAction
+	  registerLayersAction: registerLayersAction
 	};
 
-	if(typeof module !== "undefined" && typeof module.exports !== "undefined"){
+	if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
 	  module.exports = toExport;
 	} else {
 	  Object.assign(window, toExport);
 	}
 
-	function registerLayersAction(semantics){
+	function registerLayersAction(semantics) {
 	  semantics.addOperation("layers(ohmToDom, layers, depth)", {
-	    _nonterminal(children){
-	      let layers = this.args.layers || [];
-	      let depth = this.args.depth || 0;
+	    _nonterminal: function _nonterminal(children) {
+	      var _this = this;
 
-	      if(layers[depth] === undefined){
-	        let layerNode = document.createElement('pre');
-	        layers[depth] = layerNode;
+	      var layers = this.args.layers || [];
+	      var depth = this.args.depth || 0;
+
+	      if (layers[depth] === undefined) {
+	        var _layerNode = document.createElement('pre');
+	        layers[depth] = _layerNode;
 	      }
 
-	      let domNode = this.args.ohmToDom.get(this._node),
+	      var domNode = this.args.ohmToDom.get(this._node),
 	          layerNode = domNode.cloneNode(true);
-	      let boundingRect = domNode.getBoundingClientRect(),
+	      var boundingRect = domNode.getBoundingClientRect(),
 	          parentBoundingRect = domNode.closest("program").getBoundingClientRect();
 
 	      layers[depth].appendChild(layerNode);
 	      layerNode.style.position = "absolute";
-	      layerNode.style.top =  boundingRect.top - parentBoundingRect.top;
+	      layerNode.style.top = boundingRect.top - parentBoundingRect.top;
 	      layerNode.style.left = boundingRect.left - parentBoundingRect.left;
 	      layerNode.style.textIndent = domNode.offsetLeft - boundingRect.left;
 
-	      children.forEach((child)=>{
-	        child.layers(
-	          this.args.ohmToDom,
-	          layers,
-	          depth + 1
-	        )
+	      children.forEach(function (child) {
+	        child.layers(_this.args.ohmToDom, layers, depth + 1);
 	      });
 
 	      return layers;
 	    },
-	    _terminal(){
-	      let layers = this.args.layers || [];
-	      let depth = this.args.depth || 0;
+	    _terminal: function _terminal() {
+	      var layers = this.args.layers || [];
+	      var depth = this.args.depth || 0;
 
-	      if(layers[depth] === undefined){
+	      if (layers[depth] === undefined) {
 	        layers[depth] = document.createElement('pre');
 	      }
 
-	      let domNode = this.args.ohmToDom.get(this._node),
+	      var domNode = this.args.ohmToDom.get(this._node),
 	          layerNode = domNode.cloneNode(true);
-	          let boundingRect = domNode.getBoundingClientRect(),
-	              parentBoundingRect = domNode.closest("program").getBoundingClientRect();
+	      var boundingRect = domNode.getBoundingClientRect(),
+	          parentBoundingRect = domNode.closest("program").getBoundingClientRect();
 
 	      layers[depth].appendChild(layerNode);
 	      layerNode.style.position = "absolute";
-	      layerNode.style.top =  boundingRect.top - parentBoundingRect.top;
+	      layerNode.style.top = boundingRect.top - parentBoundingRect.top;
 	      layerNode.style.left = boundingRect.left - parentBoundingRect.left;
 
 	      return layers;
 	    }
 	  });
 	}
-
 
 /***/ }
 /******/ ]);
