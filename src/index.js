@@ -88,7 +88,6 @@ function init(layerNodes, width, height){
     object3d.position.set(-width/2, height/2, i*3);
     scene.add(object3d);
   })
-  // scene.add( new CodeExample(example, -50, -50, 0) );
 
   controls = new THREE.TrackballControls(camera);
   controls.rotateSpeed = 4;
