@@ -1,9 +1,13 @@
+//create scenes for css and gl
+//create webgl objects
+//create dom objects
+
 var reify = require("./reify.js"),
     language = require("./language.js"),
     layers = require("./layers.js");
 
-let example = ["class Point with x, y;",
-"",
+let example = ['class Point with x, y;',
+'',
 'def Point.init(x, y) {',
 '  this.x = x;',
 '  this.y = y;',
@@ -64,34 +68,68 @@ document.addEventListener("DOMContentLoaded", function(){
   animate();
 });
 
-let camera, scene, renderer, controls;
+let camera,
+    cssScene, cssRenderer,
+    glScene, glRenderer,
+    controls;
 
 function init(layerNodes, width, height){
-  console.log(width, height);
-  scene = new THREE.Scene();
+  //CREATE SCENES
+  cssScene = new THREE.Scene();
+  glScene = new THREE.Scene();
 
+  //CREATE CAMERA
   camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500 );
   camera.position.z = 500;
 
   // let light = new THREE.AmbientLight( 0x404040 ); // soft white light
-  // scene.add( light );
+  // cssScene.add( light );
 
-  renderer = new THREE.CSS3DRenderer();
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  renderer.domElement.style.position = 'absolute';
-  renderer.domElement.style.top = 0;
+  //CREATE RENDERERS
+  cssRenderer = new THREE.CSS3DRenderer();
+  cssRenderer.setSize( window.innerWidth, window.innerHeight );
+  cssRenderer.domElement.style.position = 'absolute';
+  cssRenderer.domElement.style.top = 0;
+  document.body.appendChild( cssRenderer.domElement );
 
-  document.body.appendChild( renderer.domElement );
+  glRenderer = new THREE.WebGLRenderer({alpha: true});
+  glRenderer.setSize( window.innerWidth, window.innerHeight );
+  glRenderer.setClearColor( 0xffffff );
+  glRenderer.setPixelRatio( window.devicePixelRatio );
+  document.body.appendChild( glRenderer.domElement );
 
+
+
+  //ADD OBJECTS TO CSS SCENE
   let layerDiff = 2;
   layerNodes.forEach((layer, i)=>{
     for(let j=0; j < layerDiff; j+=1){
       let object3d = new THREE.CSS3DObject(layer.cloneNode(true));
       object3d.position.set(-width/2, height/2, i*layerDiff + j);
-      scene.add(object3d);
+      cssScene.add(object3d);
     }
   })
 
+  //ADD OBJECTS TO GL SCENE
+  let geometry = new THREE.BoxGeometry( 200, 200, 200 );
+
+  for ( var i = 0; i < geometry.faces.length; i += 2 ) {
+
+    var hex = Math.random() * 0xffffff;
+    geometry.faces[ i ].color.setHex( hex );
+    geometry.faces[ i + 1 ].color.setHex( hex );
+
+  }
+
+  let material = new THREE.MeshBasicMaterial( { vertexColors: THREE.FaceColors, overdraw: 0.5 } );
+  material.opacity = 0.5;
+  // material.blending = THREE.AdditiveBlending;
+
+  let cube = new THREE.Mesh( geometry, material );
+  cube.position.z = 100;
+  glScene.add( cube );
+
+  //SETUP CONTROLS
   controls = new THREE.TrackballControls(camera);
   controls.rotateSpeed = 4;
 
@@ -101,11 +139,13 @@ function init(layerNodes, width, height){
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  cssRenderer.setSize(window.innerWidth, window.innerHeight);
+  glRenderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function animate(){
   requestAnimationFrame(animate);
   controls.update();
-  renderer.render(scene, camera);
+  cssRenderer.render(cssScene, camera);
+  glRenderer.render(glScene, camera);
 }

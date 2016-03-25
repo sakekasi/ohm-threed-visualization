@@ -1,4 +1,3 @@
-//maybe we want to do this using WebComponents
 'use strict';
 
 var $ = require("jquery");
