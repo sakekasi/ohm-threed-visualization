@@ -6,32 +6,32 @@ var reify = require("./reify.js"),
     language = require("./language.js"),
     layers = require("./layers.js");
 
-let example = ['class Point with x, y;',
-'',
-'def Point.init(x, y) {',
-'  this.x = x;',
-'  this.y = y;',
-'}',
-'',
-'def Point.toString() {',
-'  return "Point(" + this.x + ", " + this.y + ")";',
-'}',
-'',
-'class ThreeDeePoint extends Point with z;',
-'',
-'def ThreeDeePoint.init(x, y, z) {',
-'  super.init(x, y);',
-'  this.z = z;',
-'}',
-'',
-'def ThreeDeePoint.toString() {',
-'  return "ThreeDeePoint(" +',
-'    this.x + ", " +',
-'    this.y + ", " +',
-'    this.z + ")";',
-'}',
-'',
-'new Point(1, 2);'].join("\n");
+let example = `class Point with x, y;
+
+def Point.init(x, y) {
+  this.x = x;
+  this.y = y;
+}
+
+def Point.toString() {
+  return "Point(" + this.x + ", " + this.y + ")";
+}
+
+class ThreeDeePoint extends Point with z;
+
+def ThreeDeePoint.init(x, y, z) {
+  super.init(x, y);
+  this.z = z;
+}
+
+def ThreeDeePoint.toString() {
+  return "ThreeDeePoint(" +
+    this.x + ", " +
+    this.y + ", " +
+    this.z + ")";
+}
+
+new Point(1, 2);`
 
 document.addEventListener("DOMContentLoaded", function(){
   let grammar = language.grammar,
@@ -94,7 +94,7 @@ function init(layerNodes, width, height){
 
   glRenderer = new THREE.WebGLRenderer({alpha: true});
   glRenderer.setSize( window.innerWidth, window.innerHeight );
-  glRenderer.setClearColor( 0xffffff );
+  glRenderer.setClearColor( 0x000000, 0 );
   glRenderer.setPixelRatio( window.devicePixelRatio );
   document.body.appendChild( glRenderer.domElement );
 
@@ -111,22 +111,21 @@ function init(layerNodes, width, height){
   })
 
   //ADD OBJECTS TO GL SCENE
-  let geometry = new THREE.BoxGeometry( 200, 200, 200 );
+  let geometry = new THREE.BoxGeometry( width, height, 2*layerNodes.length);
 
-  for ( var i = 0; i < geometry.faces.length; i += 2 ) {
-
-    var hex = Math.random() * 0xffffff;
+  let hex = Math.random() * 0xffffff;
+  for ( let i = 0; i < geometry.faces.length; i += 2 ) {
     geometry.faces[ i ].color.setHex( hex );
     geometry.faces[ i + 1 ].color.setHex( hex );
-
   }
 
   let material = new THREE.MeshBasicMaterial( { vertexColors: THREE.FaceColors, overdraw: 0.5 } );
-  material.opacity = 0.5;
+  material.opacity = 0.7;
   // material.blending = THREE.AdditiveBlending;
 
   let cube = new THREE.Mesh( geometry, material );
-  cube.position.z = 100;
+  cube.position.z = layerNodes.length;
+  cube.position.y = 15;
   glScene.add( cube );
 
   //SETUP CONTROLS
