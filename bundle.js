@@ -56,12 +56,31 @@
 
 	var example = "class Point with x, y;\n\ndef Point.init(x, y) {\n  this.x = x;\n  this.y = y;\n}\n\ndef Point.toString() {\n  return \"Point(\" + this.x + \", \" + this.y + \")\";\n}\n\nclass ThreeDeePoint extends Point with z;\n\ndef ThreeDeePoint.init(x, y, z) {\n  super.init(x, y);\n  this.z = z;\n}\n\ndef ThreeDeePoint.toString() {\n  return \"ThreeDeePoint(\" +\n    this.x + \", \" +\n    this.y + \", \" +\n    this.z + \")\";\n}\n\nnew Point(1, 2);";
 
+	var camera = undefined,
+	    cssScene = undefined,
+	    cssRenderer = undefined,
+	    glScene = undefined,
+	    glRenderer = undefined,
+	    controls = undefined;
+
 	document.addEventListener("DOMContentLoaded", function () {
 	  var grammar = language.grammar,
 	      semantics = language.semantics;
 
 	  reify.registerReifyActions(semantics);
 	  layers.registerLayersAction(semantics);
+
+	  var _createScenes = createScenes();
+
+	  var cssScene = _createScenes.cssScene;
+	  var glScene = _createScenes.glScene;
+
+	  var _createRenderers = createRenderers();
+
+	  var cssRenderer = _createRenderers.cssRenderer;
+	  var glRenderer = _createRenderers.glRenderer;
+
+	  var camera = createCamera();
 
 	  var match = undefined;
 	  var semmatch = undefined;
@@ -81,47 +100,16 @@
 	  pre.appendChild(DOM);
 	  document.body.appendChild(pre);
 
-	  var boundingRect = DOM.getBoundingClientRect();
+	  var _DOM$getBoundingClien = DOM.getBoundingClientRect();
 
-	  var layerNodes = semmatch.layers(ohmToDom, null, null);
+	  var width = _DOM$getBoundingClien.width;
+	  var height = _DOM$getBoundingClien.height;
+
+	  //TODO: hand off scene, more info
+
+	  var layerNodes = semmatch.layers(ohmToDom, null, glScene, null, width, height);
 
 	  pre.style.display = "none";
-
-	  init(layerNodes, boundingRect.width, boundingRect.height);
-	  animate();
-	});
-
-	var camera = undefined,
-	    cssScene = undefined,
-	    cssRenderer = undefined,
-	    glScene = undefined,
-	    glRenderer = undefined,
-	    controls = undefined;
-
-	function init(layerNodes, width, height) {
-	  //CREATE SCENES
-	  cssScene = new THREE.Scene();
-	  glScene = new THREE.Scene();
-
-	  //CREATE CAMERA
-	  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 500);
-	  camera.position.z = 500;
-
-	  // let light = new THREE.AmbientLight( 0x404040 ); // soft white light
-	  // cssScene.add( light );
-
-	  //CREATE RENDERERS
-	  cssRenderer = new THREE.CSS3DRenderer();
-	  cssRenderer.setSize(window.innerWidth, window.innerHeight);
-	  cssRenderer.domElement.style.position = 'absolute';
-	  cssRenderer.domElement.style.top = 0;
-	  document.body.appendChild(cssRenderer.domElement);
-
-	  glRenderer = new THREE.WebGLRenderer({ alpha: true });
-	  glRenderer.setSize(window.innerWidth, window.innerHeight);
-	  glRenderer.setClearColor(0x000000, 0);
-	  glRenderer.setPixelRatio(window.devicePixelRatio);
-	  document.body.appendChild(glRenderer.domElement);
 
 	  //ADD OBJECTS TO CSS SCENE
 	  var layerDiff = 2;
@@ -133,40 +121,67 @@
 	    }
 	  });
 
-	  //ADD OBJECTS TO GL SCENE
-	  var geometry = new THREE.BoxGeometry(width, height, 2 * layerNodes.length);
-
-	  var hex = Math.random() * 0xffffff;
-	  for (var i = 0; i < geometry.faces.length; i += 2) {
-	    geometry.faces[i].color.setHex(hex);
-	    geometry.faces[i + 1].color.setHex(hex);
-	  }
-
-	  var material = new THREE.MeshBasicMaterial({ vertexColors: THREE.FaceColors, overdraw: 0.5 });
-	  material.opacity = 0.7;
-	  // material.blending = THREE.AdditiveBlending;
-
-	  var cube = new THREE.Mesh(geometry, material);
-	  cube.position.z = layerNodes.length;
-	  cube.position.y = 15;
-	  glScene.add(cube);
-
-	  //SETUP CONTROLS
 	  controls = new THREE.TrackballControls(camera);
 	  controls.rotateSpeed = 4;
 
-	  window.addEventListener('resize', onWindowResize, false);
+	  window.addEventListener('resize', onWindowResize.bind(null, { camera: camera, cssRenderer: cssRenderer, glRenderer: glRenderer }), false);
+
+	  animate({ cssScene: cssScene, glScene: glScene, cssRenderer: cssRenderer, glRenderer: glRenderer, camera: camera });
+	});
+
+	function createScenes() {
+	  return {
+	    cssScene: new THREE.Scene(),
+	    glScene: new THREE.Scene()
+	  };
 	}
 
-	function onWindowResize() {
+	function createCamera() {
+	  var camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 1, 1000);
+	  camera.position.z = 500;
+	  return camera;
+	}
+
+	function createRenderers() {
+	  var cssRenderer = new THREE.CSS3DRenderer();
+	  cssRenderer.setSize(window.innerWidth, window.innerHeight);
+	  cssRenderer.domElement.style.position = 'absolute';
+	  cssRenderer.domElement.style.top = 0;
+	  document.body.appendChild(cssRenderer.domElement);
+
+	  var glRenderer = new THREE.WebGLRenderer({ alpha: true });
+	  glRenderer.setSize(window.innerWidth, window.innerHeight);
+	  glRenderer.setClearColor(0x000000, 0);
+	  glRenderer.setPixelRatio(window.devicePixelRatio);
+	  document.body.appendChild(glRenderer.domElement);
+
+	  return {
+	    cssRenderer: cssRenderer,
+	    glRenderer: glRenderer
+	  };
+	}
+
+	function onWindowResize(_ref) {
+	  var camera = _ref.camera;
+	  var cssRenderer = _ref.cssRenderer;
+	  var glRenderer = _ref.glRenderer;
+
 	  camera.aspect = window.innerWidth / window.innerHeight;
 	  camera.updateProjectionMatrix();
 	  cssRenderer.setSize(window.innerWidth, window.innerHeight);
 	  glRenderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
-	function animate() {
-	  requestAnimationFrame(animate);
+	function animate(_ref2) {
+	  var cssScene = _ref2.cssScene;
+	  var glScene = _ref2.glScene;
+	  var cssRenderer = _ref2.cssRenderer;
+	  var glRenderer = _ref2.glRenderer;
+	  var camera = _ref2.camera;
+
+	  requestAnimationFrame(animate.bind(null, {
+	    cssScene: cssScene, glScene: glScene, cssRenderer: cssRenderer, glRenderer: glRenderer, camera: camera
+	  }));
 	  controls.update();
 	  cssRenderer.render(cssScene, camera);
 	  glRenderer.render(glScene, camera);
@@ -6603,9 +6618,11 @@
 
 /***/ },
 /* 5 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
+
+	var Block3D = __webpack_require__(6).Block3D;
 
 	var toExport = {
 	  registerLayersAction: registerLayersAction
@@ -6618,12 +6635,15 @@
 	}
 
 	function registerLayersAction(semantics) {
-	  semantics.addOperation("layers(ohmToDom, layers, depth)", {
+	  semantics.addOperation("layers(ohmToDom, layers, scene, depth, width, height)", {
 	    _nonterminal: function _nonterminal(children) {
 	      var _this = this;
 
 	      var layers = this.args.layers || [];
 	      var depth = this.args.depth || 0;
+
+	      var width = this.args.width,
+	          height = this.args.height;
 
 	      if (layers[depth] === undefined) {
 	        var _layerNode = document.createElement('pre');
@@ -6631,18 +6651,29 @@
 	      }
 
 	      var domNode = this.args.ohmToDom.get(this._node),
-	          layerNode = domNode.cloneNode(true);
+	          layerNode = domNode.cloneNode(true),
+	          container = document.createElement('span');
+
 	      var boundingRect = domNode.getBoundingClientRect(),
 	          parentBoundingRect = domNode.closest("program").getBoundingClientRect();
 
-	      layers[depth].appendChild(layerNode);
-	      layerNode.style.position = "absolute";
-	      layerNode.style.top = boundingRect.top - parentBoundingRect.top;
-	      layerNode.style.left = boundingRect.left - parentBoundingRect.left;
-	      layerNode.style.textIndent = domNode.offsetLeft - boundingRect.left;
+	      var top = boundingRect.top - parentBoundingRect.top,
+	          left = boundingRect.left - parentBoundingRect.left,
+	          nw = boundingRect.width,
+	          nh = boundingRect.height;
+
+	      container.appendChild(layerNode);
+	      layers[depth].appendChild(container);
+	      container.style.position = 'absolute';
+	      container.style.top = top;
+	      container.style.left = left;
+	      container.style.textIndent = domNode.offsetLeft - boundingRect.left;
+
+	      console.log(this.ctorName, top, left);
+	      new Block3D(this.args.scene, 0 + nw / 2 - width / 2 + left, 15 - nh / 2 + height / 2 - top, depth * 2, nw, nh, 2);
 
 	      children.forEach(function (child) {
-	        child.layers(_this.args.ohmToDom, layers, depth + 1);
+	        child.layers(_this.args.ohmToDom, layers, _this.args.scene, depth + 1, width, height);
 	      });
 
 	      return layers;
@@ -6651,23 +6682,96 @@
 	      var layers = this.args.layers || [];
 	      var depth = this.args.depth || 0;
 
+	      var width = this.args.width,
+	          height = this.args.height;
+
 	      if (layers[depth] === undefined) {
-	        layers[depth] = document.createElement('pre');
+	        var _layerNode2 = document.createElement('pre');
+	        layers[depth] = _layerNode2;
 	      }
 
 	      var domNode = this.args.ohmToDom.get(this._node),
-	          layerNode = domNode.cloneNode(true);
+	          layerNode = domNode.cloneNode(true),
+	          container = document.createElement('span');
+
 	      var boundingRect = domNode.getBoundingClientRect(),
 	          parentBoundingRect = domNode.closest("program").getBoundingClientRect();
 
-	      layers[depth].appendChild(layerNode);
-	      layerNode.style.position = "absolute";
-	      layerNode.style.top = boundingRect.top - parentBoundingRect.top;
-	      layerNode.style.left = boundingRect.left - parentBoundingRect.left;
+	      var top = boundingRect.top - parentBoundingRect.top,
+	          left = boundingRect.left - parentBoundingRect.left,
+	          nw = boundingRect.width,
+	          nh = boundingRect.height;
+
+	      container.appendChild(layerNode);
+	      layers[depth].appendChild(container);
+	      container.style.position = 'absolute';
+	      container.style.top = top;
+	      container.style.left = left;
+	      container.style.textIndent = domNode.offsetLeft - boundingRect.left;
+
+	      console.log(this.ctorName, top, left);
+	      new Block3D(this.args.scene, 0 + nw / 2 - width / 2 + left, 15 - nh / 2 + height / 2 - top, depth * 2, nw, nh, 2);
 
 	      return layers;
 	    }
 	  });
+	}
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var topMaterial = new THREE.MeshBasicMaterial({ vertexColors: THREE.FaceColors, overdraw: 0.5, side: THREE.DoubleSide, opacity: 0.1 }),
+	    sideMaterial = new THREE.MeshBasicMaterial({ vertexColors: THREE.FaceColors, overdraw: 0.5, side: THREE.DoubleSide, opacity: 0.8 });
+	var material = new THREE.MeshFaceMaterial([sideMaterial, //right
+	sideMaterial, //left
+	sideMaterial, //north
+	sideMaterial, //south
+	topMaterial, //top
+	topMaterial //bottom
+	]);
+
+	var colorHex = 0x000000; //black //TODO: use chroma js here
+
+	var Block3D = function Block3D(scene, x, y, z, width, height, depth) {
+	  _classCallCheck(this, Block3D);
+
+	  console.log(x, y, z, width, height, depth);
+
+	  this.x = x;
+	  this.y = y;
+	  this.z = z;
+
+	  this.width = width;
+	  this.height = height;
+	  this.depth = depth;
+
+	  this.geometry = new THREE.BoxGeometry(width, height, depth);
+
+	  for (var i = 0; i < this.geometry.faces.length; i += 2) {
+	    this.geometry.faces[i].color.setHex(colorHex);
+	    this.geometry.faces[i + 1].color.setHex(colorHex);
+	  }
+
+	  this.cube = new THREE.Mesh(this.geometry, material);
+
+	  this.cube.position.set(x, y, z);
+
+	  scene.add(this.cube);
+	};
+
+	var toExport = {
+	  Block3D: Block3D
+	};
+
+	if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+	  module.exports = toExport;
+	} else {
+	  Object.assign(window, toExport);
 	}
 
 /***/ }

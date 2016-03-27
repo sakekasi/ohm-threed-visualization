@@ -31,7 +31,12 @@ def ThreeDeePoint.toString() {
     this.z + ")";
 }
 
-new Point(1, 2);`
+new Point(1, 2);`;
+
+let camera,
+    cssScene, cssRenderer,
+    glScene, glRenderer,
+    controls;
 
 document.addEventListener("DOMContentLoaded", function(){
   let grammar = language.grammar,
@@ -39,6 +44,10 @@ document.addEventListener("DOMContentLoaded", function(){
 
   reify.registerReifyActions(semantics);
   layers.registerLayersAction(semantics);
+
+  let {cssScene, glScene} = createScenes();
+  let {cssRenderer, glRenderer} = createRenderers();
+  let camera = createCamera();
 
   let match;
   let semmatch;
@@ -58,47 +67,12 @@ document.addEventListener("DOMContentLoaded", function(){
   pre.appendChild(DOM);
   document.body.appendChild(pre);
 
-  let boundingRect = DOM.getBoundingClientRect();
+  let {width, height} = DOM.getBoundingClientRect();
 
-  let layerNodes = semmatch.layers(ohmToDom, null, null);
+  //TODO: hand off scene, more info
+  let layerNodes = semmatch.layers(ohmToDom, null, glScene, null, width, height);
 
   pre.style.display = "none";
-
-  init(layerNodes, boundingRect.width, boundingRect.height);
-  animate();
-});
-
-let camera,
-    cssScene, cssRenderer,
-    glScene, glRenderer,
-    controls;
-
-function init(layerNodes, width, height){
-  //CREATE SCENES
-  cssScene = new THREE.Scene();
-  glScene = new THREE.Scene();
-
-  //CREATE CAMERA
-  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500 );
-  camera.position.z = 500;
-
-  // let light = new THREE.AmbientLight( 0x404040 ); // soft white light
-  // cssScene.add( light );
-
-  //CREATE RENDERERS
-  cssRenderer = new THREE.CSS3DRenderer();
-  cssRenderer.setSize( window.innerWidth, window.innerHeight );
-  cssRenderer.domElement.style.position = 'absolute';
-  cssRenderer.domElement.style.top = 0;
-  document.body.appendChild( cssRenderer.domElement );
-
-  glRenderer = new THREE.WebGLRenderer({alpha: true});
-  glRenderer.setSize( window.innerWidth, window.innerHeight );
-  glRenderer.setClearColor( 0x000000, 0 );
-  glRenderer.setPixelRatio( window.devicePixelRatio );
-  document.body.appendChild( glRenderer.domElement );
-
-
 
   //ADD OBJECTS TO CSS SCENE
   let layerDiff = 2;
@@ -108,42 +82,62 @@ function init(layerNodes, width, height){
       object3d.position.set(-width/2, height/2, i*layerDiff + j);
       cssScene.add(object3d);
     }
-  })
+  });
 
-  //ADD OBJECTS TO GL SCENE
-  let geometry = new THREE.BoxGeometry( width, height, 2*layerNodes.length);
-
-  let hex = Math.random() * 0xffffff;
-  for ( let i = 0; i < geometry.faces.length; i += 2 ) {
-    geometry.faces[ i ].color.setHex( hex );
-    geometry.faces[ i + 1 ].color.setHex( hex );
-  }
-
-  let material = new THREE.MeshBasicMaterial( { vertexColors: THREE.FaceColors, overdraw: 0.5 } );
-  material.opacity = 0.7;
-  // material.blending = THREE.AdditiveBlending;
-
-  let cube = new THREE.Mesh( geometry, material );
-  cube.position.z = layerNodes.length;
-  cube.position.y = 15;
-  glScene.add( cube );
-
-  //SETUP CONTROLS
   controls = new THREE.TrackballControls(camera);
   controls.rotateSpeed = 4;
 
-  window.addEventListener('resize', onWindowResize, false);
+  window.addEventListener('resize', onWindowResize.bind(null, {camera, cssRenderer, glRenderer}), false);
+
+  animate({cssScene, glScene, cssRenderer, glRenderer, camera});
+});
+
+
+function createScenes(){
+  return {
+    cssScene: new THREE.Scene(),
+    glScene: new THREE.Scene()
+  };
 }
 
-function onWindowResize() {
+function createCamera(){
+  let camera = new THREE.PerspectiveCamera( 85, window.innerWidth / window.innerHeight, 1, 1000 );
+  camera.position.z = 500;
+  return camera;
+}
+
+function createRenderers(){
+  let cssRenderer = new THREE.CSS3DRenderer();
+  cssRenderer.setSize( window.innerWidth, window.innerHeight );
+  cssRenderer.domElement.style.position = 'absolute';
+  cssRenderer.domElement.style.top = 0;
+  document.body.appendChild( cssRenderer.domElement );
+
+  let glRenderer = new THREE.WebGLRenderer({alpha: true});
+  glRenderer.setSize( window.innerWidth, window.innerHeight );
+  glRenderer.setClearColor( 0x000000, 0 );
+  glRenderer.setPixelRatio( window.devicePixelRatio );
+  document.body.appendChild( glRenderer.domElement );
+
+  return {
+    cssRenderer,
+    glRenderer
+  };
+}
+
+function onWindowResize({camera, cssRenderer, glRenderer}) {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   cssRenderer.setSize(window.innerWidth, window.innerHeight);
   glRenderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function animate(){
-  requestAnimationFrame(animate);
+function animate({
+  cssScene, glScene,cssRenderer, glRenderer, camera
+}){
+  requestAnimationFrame(animate.bind(null, {
+    cssScene, glScene, cssRenderer, glRenderer, camera
+  }));
   controls.update();
   cssRenderer.render(cssScene, camera);
   glRenderer.render(glScene, camera);

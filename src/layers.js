@@ -1,5 +1,7 @@
 'use strict';
 
+var Block3D = require("./block3d.js").Block3D;
+
 var toExport = {
   registerLayersAction
 };
@@ -11,10 +13,13 @@ if(typeof module !== "undefined" && typeof module.exports !== "undefined"){
 }
 
 function registerLayersAction(semantics){
-  semantics.addOperation("layers(ohmToDom, layers, depth)", {
+  semantics.addOperation("layers(ohmToDom, layers, scene, depth, width, height)", {
     _nonterminal(children){
       let layers = this.args.layers || [];
       let depth = this.args.depth || 0;
+
+      let width  = this.args.width,
+          height = this.args.height;
 
       if(layers[depth] === undefined){
         let layerNode = document.createElement('pre');
@@ -22,21 +27,35 @@ function registerLayersAction(semantics){
       }
 
       let domNode = this.args.ohmToDom.get(this._node),
-          layerNode = domNode.cloneNode(true);
+          layerNode = domNode.cloneNode(true),
+          container = document.createElement('span');
+
       let boundingRect = domNode.getBoundingClientRect(),
           parentBoundingRect = domNode.closest("program").getBoundingClientRect();
 
-      layers[depth].appendChild(layerNode);
-      layerNode.style.position = "absolute";
-      layerNode.style.top =  boundingRect.top - parentBoundingRect.top;
-      layerNode.style.left = boundingRect.left - parentBoundingRect.left;
-      layerNode.style.textIndent = domNode.offsetLeft - boundingRect.left;
+      let top = boundingRect.top - parentBoundingRect.top,
+          left = boundingRect.left - parentBoundingRect.left,
+          nw = boundingRect.width,
+          nh = boundingRect.height;
+
+      container.appendChild(layerNode);
+      layers[depth].appendChild(container);
+      container.style.position = 'absolute';
+      container.style.top =  top;
+      container.style.left = left;
+      container.style.textIndent = domNode.offsetLeft - boundingRect.left;
+
+      console.log(this.ctorName, top, left);
+      new Block3D(this.args.scene,
+        0 + nw/2  - width/2 + left , 15 - nh/2 + height/2 - top, depth*2,
+        nw, nh, 2
+      );
 
       children.forEach((child)=>{
         child.layers(
           this.args.ohmToDom,
-          layers,
-          depth + 1
+          layers, this.args.scene,
+          depth + 1, width, height
         )
       });
 
@@ -46,19 +65,38 @@ function registerLayersAction(semantics){
       let layers = this.args.layers || [];
       let depth = this.args.depth || 0;
 
+      let width  = this.args.width,
+          height = this.args.height;
+
       if(layers[depth] === undefined){
-        layers[depth] = document.createElement('pre');
+        let layerNode = document.createElement('pre');
+        layers[depth] = layerNode;
       }
 
       let domNode = this.args.ohmToDom.get(this._node),
-          layerNode = domNode.cloneNode(true);
-          let boundingRect = domNode.getBoundingClientRect(),
-              parentBoundingRect = domNode.closest("program").getBoundingClientRect();
+          layerNode = domNode.cloneNode(true),
+          container = document.createElement('span');
 
-      layers[depth].appendChild(layerNode);
-      layerNode.style.position = "absolute";
-      layerNode.style.top =  boundingRect.top - parentBoundingRect.top;
-      layerNode.style.left = boundingRect.left - parentBoundingRect.left;
+      let boundingRect = domNode.getBoundingClientRect(),
+          parentBoundingRect = domNode.closest("program").getBoundingClientRect();
+
+      let top = boundingRect.top - parentBoundingRect.top,
+          left = boundingRect.left - parentBoundingRect.left,
+          nw = boundingRect.width,
+          nh = boundingRect.height;
+
+      container.appendChild(layerNode);
+      layers[depth].appendChild(container);
+      container.style.position = 'absolute';
+      container.style.top =  top;
+      container.style.left = left;
+      container.style.textIndent = domNode.offsetLeft - boundingRect.left;
+
+      console.log(this.ctorName, top, left);
+      new Block3D(this.args.scene,
+        0 + nw/2  - width/2 + left , 15 - nh/2 + height/2 - top, depth*2,
+        nw, nh, 2
+      );
 
       return layers;
     }
