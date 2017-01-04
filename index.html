@@ -1,15 +1,25 @@
 <html>
 <head>
   <style>
+  body{
+    margin: 0px;
+  }
+
   pre{
     font-family: "input serif compressed", monospace;
+    font-size: 15px;
     -moz-user-select: none;
     -webkit-user-select: none;
     color: hsl(0, 0%; 40%);
   }
 
-  pre * {
+  pre *:not(span) {
     background-color: hsla(0, 0%, 70%, 0.05);
+  }
+
+  canvas {
+    position: absolute;
+    z-index: 100;
   }
   </style>
   <script type="text/ohm-js">
@@ -141,9 +151,11 @@
   </script>
 </head>
 <body>
-<script src="three.js-master/build/three.min.js"></script>
-<script src="three.js-master/examples/js/controls/TrackballControls.js"></script>
-<script src="three.js-master/examples/js/renderers/CSS3DRenderer.js"></script>
+<script src="lib/three-js/build/three.min.js"></script>
+<script src="lib/three-js/examples/js/controls/TrackballControls.js"></script>
+<script src="lib/three-js/examples/js/renderers/CSS3DRenderer.js"></script>
+<script src="lib/three-js/examples/js/renderers/CanvasRenderer.js"></script>
+<script src="lib/three-js/examples/js/renderers/Projector.js"></script>
 <script src="bundle.js"></script>
 </body>
 </html>

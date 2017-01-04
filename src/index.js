@@ -1,33 +1,42 @@
+//create scenes for css and gl
+//create webgl objects
+//create dom objects
+
 var reify = require("./reify.js"),
     language = require("./language.js"),
     layers = require("./layers.js");
 
-let example = ["class Point with x, y;",
-"",
-'def Point.init(x, y) {',
-'  this.x = x;',
-'  this.y = y;',
-'}',
-'',
-'def Point.toString() {',
-'  return "Point(" + this.x + ", " + this.y + ")";',
-'}',
-'',
-'class ThreeDeePoint extends Point with z;',
-'',
-'def ThreeDeePoint.init(x, y, z) {',
-'  super.init(x, y);',
-'  this.z = z;',
-'}',
-'',
-'def ThreeDeePoint.toString() {',
-'  return "ThreeDeePoint(" +',
-'    this.x + ", " +',
-'    this.y + ", " +',
-'    this.z + ")";',
-'}',
-'',
-'new Point(1, 2);'].join("\n");
+let example = `class Point with x, y;
+
+def Point.init(x, y) {
+  this.x = x;
+  this.y = y;
+}
+
+def Point.toString() {
+  return "Point(" + this.x + ", " + this.y + ")";
+}
+
+class ThreeDeePoint extends Point with z;
+
+def ThreeDeePoint.init(x, y, z) {
+  super.init(x, y);
+  this.z = z;
+}
+
+def ThreeDeePoint.toString() {
+  return "ThreeDeePoint(" +
+    this.x + ", " +
+    this.y + ", " +
+    this.z + ")";
+}
+
+new Point(1, 2);`;
+
+let camera,
+    cssScene, cssRenderer,
+    glScene, glRenderer,
+    controls;
 
 document.addEventListener("DOMContentLoaded", function(){
   let grammar = language.grammar,
@@ -35,6 +44,10 @@ document.addEventListener("DOMContentLoaded", function(){
 
   reify.registerReifyActions(semantics);
   layers.registerLayersAction(semantics);
+
+  let {cssScene, glScene} = createScenes();
+  let {cssRenderer, glRenderer} = createRenderers();
+  let camera = createCamera();
 
   let match;
   let semmatch;
@@ -54,58 +67,78 @@ document.addEventListener("DOMContentLoaded", function(){
   pre.appendChild(DOM);
   document.body.appendChild(pre);
 
-  let boundingRect = DOM.getBoundingClientRect();
+  let {width, height} = DOM.getBoundingClientRect();
 
-  let layerNodes = semmatch.layers(ohmToDom, null, null);
+  //TODO: hand off scene, more info
+  let layerNodes = semmatch.layers(ohmToDom, null, glScene, null, width, height);
 
   pre.style.display = "none";
 
-  init(layerNodes, boundingRect.width, boundingRect.height);
-  animate();
-});
-
-let camera, scene, renderer, controls;
-
-function init(layerNodes, width, height){
-  console.log(width, height);
-  scene = new THREE.Scene();
-
-  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500 );
-  camera.position.z = 500;
-
-  // let light = new THREE.AmbientLight( 0x404040 ); // soft white light
-  // scene.add( light );
-
-  renderer = new THREE.CSS3DRenderer();
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  renderer.domElement.style.position = 'absolute';
-  renderer.domElement.style.top = 0;
-
-  document.body.appendChild( renderer.domElement );
-
+  //ADD OBJECTS TO CSS SCENE
   let layerDiff = 2;
   layerNodes.forEach((layer, i)=>{
     for(let j=0; j < layerDiff; j+=1){
       let object3d = new THREE.CSS3DObject(layer.cloneNode(true));
       object3d.position.set(-width/2, height/2, i*layerDiff + j);
-      scene.add(object3d);
+      cssScene.add(object3d);
     }
-  })
+  });
 
   controls = new THREE.TrackballControls(camera);
   controls.rotateSpeed = 4;
 
-  window.addEventListener('resize', onWindowResize, false);
+  window.addEventListener('resize', onWindowResize.bind(null, {camera, cssRenderer, glRenderer}), false);
+
+  animate({cssScene, glScene, cssRenderer, glRenderer, camera});
+});
+
+
+function createScenes(){
+  return {
+    cssScene: new THREE.Scene(),
+    glScene: new THREE.Scene()
+  };
 }
 
-function onWindowResize() {
+function createCamera(){
+  let camera = new THREE.PerspectiveCamera( 85, window.innerWidth / window.innerHeight, 1, 1000 );
+  camera.position.z = 500;
+  return camera;
+}
+
+function createRenderers(){
+  let cssRenderer = new THREE.CSS3DRenderer();
+  cssRenderer.setSize( window.innerWidth, window.innerHeight );
+  cssRenderer.domElement.style.position = 'absolute';
+  cssRenderer.domElement.style.top = 0;
+  document.body.appendChild( cssRenderer.domElement );
+
+  let glRenderer = new THREE.WebGLRenderer({alpha: true});
+  glRenderer.setSize( window.innerWidth, window.innerHeight );
+  glRenderer.setClearColor( 0x000000, 0 );
+  glRenderer.setPixelRatio( window.devicePixelRatio );
+  document.body.appendChild( glRenderer.domElement );
+
+  return {
+    cssRenderer,
+    glRenderer
+  };
+}
+
+function onWindowResize({camera, cssRenderer, glRenderer}) {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  cssRenderer.setSize(window.innerWidth, window.innerHeight);
+  glRenderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function animate(){
-  requestAnimationFrame(animate);
+function animate({
+  cssScene, glScene,cssRenderer, glRenderer, camera
+}){
+  requestAnimationFrame(animate.bind(null, {
+    cssScene, glScene, cssRenderer, glRenderer, camera
+  }));
   controls.update();
-  renderer.render(scene, camera);
+  cssRenderer.render(cssScene, camera);
+  glRenderer.render(glScene, camera);
 }
